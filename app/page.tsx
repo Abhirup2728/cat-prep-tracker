@@ -1,65 +1,109 @@
-import Image from "next/image";
+'use client'
+
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { fieldsForDate, DailyTracker, CATEGORY_STYLES } from '@/lib/schedule'
+import { todayStr, formatFullDate, isWeekend, daysRemaining, PLAN_END } from '@/lib/date'
+import { quoteForDate } from '@/lib/quotes'
 
 export default function Home() {
+  const [date] = useState(todayStr())
+  const [row, setRow] = useState<Partial<DailyTracker>>({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  const fields = fieldsForDate(date)
+  const weekend = isWeekend(date)
+
+  useEffect(() => {
+    async function load() {
+      const { data, error } = await supabase
+        .from('daily_tracker')
+        .select('*')
+        .eq('date', date)
+        .maybeSingle()
+
+      if (error) console.error('Supabase load error:', error.message, error)
+      setRow(data || { date })
+      setLoading(false)
+    }
+    load()
+  }, [date])
+
+  async function toggle(key: string) {
+    const newValue = !row[key as keyof DailyTracker]
+    const updated = { ...row, [key]: newValue, date }
+    setRow(updated)
+    setSaving(true)
+
+    const { error } = await supabase
+      .from('daily_tracker')
+      .upsert(updated, { onConflict: 'date' })
+
+    if (error) console.error(error)
+    setSaving(false)
+  }
+
+  if (loading) return <main className="p-8 text-center text-gray-500">Loading...</main>
+
+  const doneCount = fields.filter((f) => row[f.key as keyof DailyTracker]).length
+  const completion = Math.round((doneCount / fields.length) * 100)
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="max-w-xl mx-auto p-6">
+      <div className="text-center mb-6">
+        <h2 className="text-3xl font-bold">{formatFullDate(date)}</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          {weekend ? 'Weekend' : 'Weekday'} · {saving ? 'Saving...' : 'All changes saved'}
+        </p>
+      </div>
+
+      <div className="mb-4 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-sm p-4 text-center text-white">
+        <div className="text-xs uppercase tracking-wide opacity-80">Days Remaining to CAT</div>
+        <div className="text-4xl font-extrabold mt-1">{daysRemaining()}</div>
+        <div className="text-xs opacity-80 mt-1">D-Day: {formatFullDate(PLAN_END)}</div>
+      </div>
+
+      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+        <p className="text-sm italic text-gray-600">&ldquo;{quoteForDate(date)}&rdquo;</p>
+      </div>
+
+      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex justify-between text-sm mb-2 font-medium">
+          <span>Today&apos;s Completion</span>
+          <span>{completion}%</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="w-full bg-gray-100 rounded-full h-3">
+          <div
+            className="bg-gradient-to-r from-emerald-400 to-green-600 h-3 rounded-full transition-all"
+            style={{ width: `${completion}%` }}
+          />
         </div>
-      </main>
-    </div>
-  );
+      </div>
+
+      <ul className="space-y-2">
+        {fields.map((f) => {
+          const style = CATEGORY_STYLES[f.category]
+          const checked = !!row[f.key as keyof DailyTracker]
+          return (
+            <li key={f.key}>
+              <label
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition ${style.bg} ${style.border} ${
+                  checked ? 'opacity-100' : 'opacity-80 hover:opacity-100'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggle(f.key)}
+                  className={`w-5 h-5 ${style.check}`}
+                />
+                <span className={`font-medium ${style.text}`}>{f.label}</span>
+              </label>
+            </li>
+          )
+        })}
+      </ul>
+    </main>
+  )
 }
