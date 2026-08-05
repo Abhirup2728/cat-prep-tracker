@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CAT 2027 Tracker",
   description: "Daily discipline tracker for CAT 2027 prep",
+  other: {
+    "color-scheme": "light",
+  },
 };
 
 export default function RootLayout({
