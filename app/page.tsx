@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { fieldsForDate, DailyTracker, CATEGORY_STYLES } from '@/lib/schedule'
 import { todayStr, formatFullDate, isWeekend, daysRemaining, PLAN_END } from '@/lib/date'
 import { quoteForDate } from '@/lib/quotes'
+import DayCountdown from '@/components/DayCountdown'
 
 export default function Home() {
   const [date] = useState(todayStr())
@@ -58,10 +59,13 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="mb-4 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-sm p-4 text-center text-white">
-        <div className="text-xs uppercase tracking-wide opacity-80">Days Remaining to CAT</div>
-        <div className="text-4xl font-extrabold mt-1">{daysRemaining()}</div>
-        <div className="text-xs opacity-80 mt-1">D-Day: {formatFullDate(PLAN_END)}</div>
+      <div className="mb-4 grid grid-cols-2 gap-3">
+        <div className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-sm p-4 text-center text-white">
+          <div className="text-xs uppercase tracking-wide opacity-80">Days to CAT</div>
+          <div className="text-4xl font-extrabold mt-1">{daysRemaining()}</div>
+          <div className="text-xs opacity-80 mt-1">{formatFullDate(PLAN_END)}</div>
+        </div>
+        <DayCountdown />
       </div>
 
       <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
