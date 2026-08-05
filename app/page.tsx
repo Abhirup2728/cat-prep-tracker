@@ -68,11 +68,11 @@ export default function Home() {
         <DayCountdown />
       </div>
 
-      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center force-light">
         <p className="text-sm italic text-gray-600">&ldquo;{quoteForDate(date)}&rdquo;</p>
       </div>
 
-      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 force-light">
         <div className="flex justify-between text-sm mb-2 font-medium">
           <span>Today&apos;s Completion</span>
           <span>{completion}%</span>
